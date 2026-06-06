@@ -1,0 +1,1 @@
+import { Input } from 'antd'; export default function SearchBar(props){return <Input.Search placeholder="Search" {...props} />}

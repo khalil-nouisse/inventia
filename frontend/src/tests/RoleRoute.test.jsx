@@ -1,0 +1,1 @@
+import { test, expect } from 'vitest'; test('role route module exists', async()=>{ const mod=await import('../routes/RoleRoute.jsx'); expect(mod.default).toBeTruthy(); });

@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; import java.time.LocalDate; public record HackathonResponse(Long id,String title,String description,String theme,String prize,LocalDate registrationDeadline,LocalDate startDate,LocalDate endDate,Integer maxTeamSize,String status,UserResponse createdBy) {}

@@ -1,0 +1,1 @@
+import { api } from './api'; export const teamService = { create: (id, p) => api.post(`/hackathons/${id}/teams`, p), get: (id) => api.get(`/teams/${id}`) };

@@ -1,0 +1,1 @@
+export default function Footer(){ return <footer className="footer">ENSAM Meknes - Frameworks J2EE et Spring - 2025/2026</footer>; }

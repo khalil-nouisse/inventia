@@ -1,0 +1,1 @@
+import { test, expect } from 'vitest'; test('private route module exists', async()=>{ const mod=await import('../routes/PrivateRoute.jsx'); expect(mod.default).toBeTruthy(); });

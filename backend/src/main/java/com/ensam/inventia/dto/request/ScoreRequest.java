@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.request; import jakarta.validation.constraints.*; public record ScoreRequest(@NotNull @Min(0) @Max(10) Integer technicalScore,@NotNull @Min(0) @Max(10) Integer creativityScore,@NotNull @Min(0) @Max(10) Integer presentationScore,@Size(max=1000) String comment) {}

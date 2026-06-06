@@ -1,0 +1,1 @@
+import { Link } from 'react-router-dom'; export default function HackathonCard({hackathon}){return <article className="item"><div><p>{hackathon.status}</p><h3>{hackathon.title}</h3><span>{hackathon.theme}</span></div><Link to={`/hackathons/${hackathon.id}`}>Open</Link></article>}

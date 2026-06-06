@@ -1,0 +1,1 @@
+package com.ensam.inventia.service; public interface UserService {}

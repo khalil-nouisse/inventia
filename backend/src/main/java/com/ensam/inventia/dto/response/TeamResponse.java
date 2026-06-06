@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; import java.util.List; public record TeamResponse(Long id,String name,String description,String techStack,Long hackathonId,List<TeamMemberResponse> members) {}

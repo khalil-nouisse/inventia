@@ -1,0 +1,1 @@
+import { api } from './api'; export const hackathonService = { list: () => api.get('/hackathons'), create: (p) => api.post('/hackathons', p), get: (id) => api.get(`/hackathons/${id}`) };

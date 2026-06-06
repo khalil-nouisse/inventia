@@ -1,0 +1,1 @@
+import { Modal } from 'antd'; export default function InviteMemberModal(props){return <Modal title="Add member" {...props} />}

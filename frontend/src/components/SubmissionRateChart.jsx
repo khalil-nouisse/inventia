@@ -1,0 +1,1 @@
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis } from 'recharts'; export default function SubmissionRateChart({data=[]}){return <ResponsiveContainer height={220}><BarChart data={data}><XAxis dataKey="name"/><YAxis/><Bar dataKey="value" fill="#59CE8F"/></BarChart></ResponsiveContainer>}

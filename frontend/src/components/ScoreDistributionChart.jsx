@@ -1,0 +1,1 @@
+import { Line, LineChart, ResponsiveContainer, XAxis, YAxis } from 'recharts'; export default function ScoreDistributionChart({data=[]}){return <ResponsiveContainer height={220}><LineChart data={data}><XAxis dataKey="name"/><YAxis/><Line dataKey="value" stroke="#FF1E00"/></LineChart></ResponsiveContainer>}

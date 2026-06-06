@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.request; import jakarta.validation.constraints.*; public record UpdateProfileRequest(@NotBlank String firstName,@NotBlank String lastName,@Size(max=500) String bio) {}

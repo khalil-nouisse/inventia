@@ -1,0 +1,1 @@
+export default function CountdownTimer({date}){return <time>{date}</time>}

@@ -1,0 +1,1 @@
+import { api } from './api'; export const submissionService = { save: (id, p) => api.post(`/teams/${id}/submission`, p) };

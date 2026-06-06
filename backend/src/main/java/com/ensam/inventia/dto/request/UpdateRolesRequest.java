@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.request; import jakarta.validation.constraints.*; import java.util.Set; public record UpdateRolesRequest(@NotEmpty Set<String> roles) {}

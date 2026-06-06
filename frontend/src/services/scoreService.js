@@ -1,0 +1,1 @@
+import { api } from './api'; export const scoreService = { score: (id, p) => api.post(`/submissions/${id}/scores`, p), list: (id) => api.get(`/submissions/${id}/scores`) };

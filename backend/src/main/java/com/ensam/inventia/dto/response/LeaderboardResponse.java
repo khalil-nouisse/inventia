@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; public record LeaderboardResponse(int rank,Long teamId,String teamName,Double averageScore) {}

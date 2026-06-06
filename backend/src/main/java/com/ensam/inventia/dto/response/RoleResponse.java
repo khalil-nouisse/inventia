@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; public record RoleResponse(Long id,String name) {}

@@ -1,0 +1,1 @@
+import { api } from './api'; export const userService = { list: () => api.get('/users'), updateRoles: (id, roles) => api.put(`/users/${id}/roles`, { roles }) };

@@ -1,0 +1,1 @@
+import { test, expect } from '@playwright/test'; test('visitor can open landing page', async ({ page }) => { await page.goto('/'); await expect(page.getByRole('heading', { name: /Hackathon operations/i })).toBeVisible(); });

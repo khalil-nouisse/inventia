@@ -1,0 +1,1 @@
+import { api } from './api'; export const dashboardService = { admin: () => api.get('/dashboard/admin'), manager: () => api.get('/dashboard/manager'), user: () => api.get('/dashboard/user') };

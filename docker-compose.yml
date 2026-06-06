@@ -1,0 +1,47 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-inventia}
+      MYSQL_USER: ${MYSQL_USER:-inventia}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-inventia}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${MYSQL_DATABASE:-inventia}
+      DB_USER: ${MYSQL_USER:-inventia}
+      DB_PASSWORD: ${MYSQL_PASSWORD:-inventia}
+      JWT_SECRET: ${JWT_SECRET:-InventIASecretKeyForJwtAccessAndRefreshTokens20252026}
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN:-http://localhost:5173}
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    environment:
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080/api}
+    ports:
+      - "5173:80"
+    depends_on:
+      - backend
+volumes:
+  mysql-data:

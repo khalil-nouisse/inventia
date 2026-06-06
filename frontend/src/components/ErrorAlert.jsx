@@ -1,0 +1,1 @@
+import { Alert } from 'antd'; export default function ErrorAlert({message}){return <Alert type="error" message={message} />}

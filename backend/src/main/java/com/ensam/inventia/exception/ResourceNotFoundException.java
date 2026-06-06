@@ -1,0 +1,1 @@
+package com.ensam.inventia.exception; public class ResourceNotFoundException extends RuntimeException { public ResourceNotFoundException(String message){ super(message); } }

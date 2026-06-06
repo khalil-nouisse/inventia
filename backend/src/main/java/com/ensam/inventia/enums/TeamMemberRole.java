@@ -1,0 +1,1 @@
+package com.ensam.inventia.enums; public enum TeamMemberRole { LEADER, MEMBER }

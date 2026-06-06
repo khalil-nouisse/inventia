@@ -1,0 +1,1 @@
+import { Button, Form, Input } from 'antd'; export default function ScoreForm({onFinish}){return <Form layout="vertical" onFinish={onFinish}><Form.Item label="Title" name="title" rules={[{required:true}]}><Input /></Form.Item><Form.Item label="Description" name="description"><Input.TextArea /></Form.Item><Button htmlType="submit" type="primary">Save</Button></Form>}

@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.request; import jakarta.validation.constraints.*; public record RegisterRequest(@NotBlank @Size(max=50) String username,@NotBlank @Email String email,@NotBlank @Size(min=6) String password,@NotBlank String firstName,@NotBlank String lastName) {}

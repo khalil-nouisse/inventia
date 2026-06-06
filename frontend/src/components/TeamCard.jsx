@@ -1,0 +1,1 @@
+export default function TeamCard({team}){return <article className="item"><h3>{team.name}</h3><p>{team.techStack}</p></article>}

@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; import java.util.Map; public record DashboardStatsResponse(long totalUsers,long totalHackathons,long totalTeams,long totalSubmissions,long totalScores,Map<String,Long> distribution) {}

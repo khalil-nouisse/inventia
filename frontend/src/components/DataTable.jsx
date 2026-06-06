@@ -1,0 +1,1 @@
+import { Table } from 'antd'; export default function DataTable(props){return <Table {...props} />}

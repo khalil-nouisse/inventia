@@ -1,0 +1,1 @@
+import { api } from './api'; export const exportService = { pdf: (id) => api.get(`/hackathons/${id}/export/pdf`, { responseType: 'blob' }), excel: (id) => api.get(`/hackathons/${id}/export/excel`, { responseType: 'blob' }) };

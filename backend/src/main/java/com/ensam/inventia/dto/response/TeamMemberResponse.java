@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; public record TeamMemberResponse(Long id,UserResponse user,String memberRole) {}

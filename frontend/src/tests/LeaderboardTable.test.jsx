@@ -1,0 +1,1 @@
+import { render, screen } from '@testing-library/react'; import LeaderboardTable from '../components/LeaderboardTable'; import { test, expect } from 'vitest'; test('renders leaderboard rows',()=>{render(<LeaderboardTable rows={[{rank:1,teamName:'Team A',averageScore:9}]} />); expect(screen.getByText('Team A')).toBeInTheDocument();});

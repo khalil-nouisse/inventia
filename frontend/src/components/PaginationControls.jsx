@@ -1,0 +1,1 @@
+import { Pagination } from 'antd'; export default function PaginationControls(props){return <Pagination {...props} />}

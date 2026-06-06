@@ -1,0 +1,1 @@
+package com.ensam.inventia.exception; public class DeadlinePassedException extends RuntimeException { public DeadlinePassedException(String message){ super(message); } }

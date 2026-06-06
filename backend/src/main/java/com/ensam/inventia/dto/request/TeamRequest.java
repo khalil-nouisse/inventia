@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.request; import jakarta.validation.constraints.*; public record TeamRequest(@NotBlank @Size(max=100) String name,@Size(max=500) String description,String techStack) {}

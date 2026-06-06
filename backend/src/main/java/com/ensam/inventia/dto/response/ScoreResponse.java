@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; public record ScoreResponse(Long id,Integer technicalScore,Integer creativityScore,Integer presentationScore,String comment,Double finalScore,UserResponse judge) {}

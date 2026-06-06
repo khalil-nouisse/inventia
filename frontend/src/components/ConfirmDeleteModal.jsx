@@ -1,0 +1,1 @@
+import { Modal } from 'antd'; export default function ConfirmDeleteModal(props){return <Modal title="Confirm deletion" okText="Delete" {...props} />}

@@ -1,0 +1,1 @@
+import { Table } from 'antd'; export default function LeaderboardTable({rows=[]}){return <Table rowKey="rank" dataSource={rows} pagination={false} columns={[{title:'Rank',dataIndex:'rank'},{title:'Team',dataIndex:'teamName'},{title:'Average score',dataIndex:'averageScore'}]} />}

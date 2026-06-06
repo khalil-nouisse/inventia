@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; import java.util.Set; public record UserResponse(Long id,String username,String email,String firstName,String lastName,String bio,Boolean enabled,Set<String> roles) {}
