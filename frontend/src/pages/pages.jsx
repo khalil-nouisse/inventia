@@ -1,6 +1,6 @@
 import { Button, Form, Input, DatePicker, InputNumber, message, Table, Select, Popconfirm } from 'antd'; import { useEffect, useState } from 'react'; import { Link, useNavigate } from 'react-router-dom'; import { BarChart3, Download, Plus } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService'; import { userService } from '../services/userService';
 export function LandingPage(){return <main className="hero"><section><img src="/assets/logo-dark.png" alt="InventIA" /><h1>Hackathon operations for ENSAM teams</h1><p>Manage registrations, teams, submissions, scores, leaderboards, and exports from one role-protected workspace.</p><Link className="primary" to="/hackathons">View hackathons</Link></section></main>}
-export function LoginPage(){const {login}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{const u=await login(v); if(u?.role==='ROLE_ADMIN') navigate('/dashboard'); else navigate('/hackathons');}catch(e){message.error('Login failed');}}; return <main className="panel"><h1>Login</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="email" label="Email" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Login</Button></Form></main>}
+export function LoginPage(){const {login}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{const u=await login(v); if(u?.role==='ROLE_ADMIN') navigate('/dashboard'); else navigate('/hackathons');}catch{message.error('Login failed');}}; return <main className="panel"><h1>Login</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="email" label="Email" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Login</Button></Form></main>}
 export function RegisterPage(){return <main className="panel"><h1>Register</h1><Form layout="vertical"><Form.Item label="Email"><Input /></Form.Item><Button type="primary">Create account</Button></Form></main>}
 export function HackathonListPage(){const {hasRole}=useAuth(); const [items,setItems]=useState([]); useEffect(()=>{hackathonService.list().then(r=>setItems(r.data.data.content)).catch(()=>setItems([]));},[]); return <main><div className="pagehead"><h1>Hackathons</h1>{hasRole?.(['ROLE_MANAGER','ROLE_ADMIN']) && <Link className="primary" to="/hackathons/new"><Plus size={16}/>Create</Link>}</div><div className="grid">{items.map(h=><HackathonCard key={h.id} hackathon={h}/>)}</div></main>}
 export function HackathonDetailPage() {
@@ -101,7 +101,7 @@ export function AdminUserManagementPage(){
     try {
       const { data } = await userService.list();
       setUsers(data.data.content || []);
-    } catch (e) {
+    } catch {
       message.error('Failed to load users');
     } finally {
       setLoading(false);
@@ -109,6 +109,7 @@ export function AdminUserManagementPage(){
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, []);
 
@@ -117,7 +118,7 @@ export function AdminUserManagementPage(){
       await userService.updateRole(id, role);
       message.success('Role updated');
       fetchUsers();
-    } catch (e) {
+    } catch {
       message.error('Failed to update role');
     }
   };
