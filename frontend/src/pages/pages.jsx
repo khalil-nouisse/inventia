@@ -1,16 +1,25 @@
 import { Button, Form, Input, DatePicker, InputNumber, message, Table, Select, Popconfirm, Modal } from 'antd'; import { useEffect, useState } from 'react'; import { Link, useNavigate, useParams } from 'react-router-dom'; import { BarChart3, Download, Plus } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService'; import { userService } from '../services/userService';
+import { MyTeamDashboard } from '../components/MyTeamDashboard';
+import { teamService } from '../services/teamService';
 export function LandingPage(){return <main className="hero"><section><img src="/assets/logo-dark.png" alt="InventIA" className="logo" /><h1>Hackathon operations for ENSAM teams</h1><p>Manage registrations, teams, submissions, scores, leaderboards, and exports from one role-protected workspace.</p><Link className="primary" to="/hackathons">View hackathons</Link></section></main>}
 export function LoginPage(){const {login}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{const u=await login(v); if(u?.role==='ROLE_ADMIN') navigate('/dashboard'); else navigate('/hackathons');}catch{message.error('Login failed');}}; return <main className="panel"><h1>Login</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="email" label="Email" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Login</Button></Form></main>}
 export function RegisterPage(){const {register}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{await register(v); navigate('/hackathons');}catch{message.error('Registration failed');}}; return <main className="panel"><h1>Register</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="firstName" label="First Name" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="lastName" label="Last Name" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="username" label="Username" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="email" label="Email" rules={[{required:true,type:'email'}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true,min:6}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Create account</Button></Form></main>}
 export function HackathonListPage(){const {hasRole}=useAuth(); const [items,setItems]=useState([]); useEffect(()=>{hackathonService.list().then(r=>setItems(r.data.data.content)).catch(()=>setItems([]));},[]); return <main><div className="pagehead"><h1>Hackathons</h1>{hasRole?.(['ROLE_MANAGER','ROLE_ADMIN']) && <Link className="primary" to="/hackathons/new"><Plus size={16}/>Create</Link>}</div><div className="grid">{items.map(h=><HackathonCard key={h.id} hackathon={h}/>)}</div></main>}
+
 export function HackathonDetailPage() {
   const { user, hasRole } = useAuth();
   const navigate = useNavigate();
   const { id } = useParams();
+  const [hackathon, setHackathon] = useState(null);
   const [analytics, setAnalytics] = useState(null);
+  const [myTeam, setMyTeam] = useState(null);
   const [error, setError] = useState('');
+  const [joinModalVisible, setJoinModalVisible] = useState(false);
+  const [createModalVisible, setCreateModalVisible] = useState(false);
 
   useEffect(() => {
+    hackathonService.get(id).then(res => setHackathon(res.data.data)).catch(console.error);
+
     if (hasRole?.(['ROLE_ADMIN', 'ROLE_MANAGER'])) {
       hackathonService.analytics(id).then(res => setAnalytics(res.data.data)).catch(err => {
         if(err.response?.status === 403) {
@@ -18,17 +27,36 @@ export function HackathonDetailPage() {
         }
       });
     }
-  }, [id, hasRole]);
 
-  const handleParticipate = () => {
-    if (!user) navigate('/login');
-    else message.info('Participation logic goes here');
+    if (user && !hasRole?.(['ROLE_ADMIN', 'ROLE_MANAGER'])) {
+      fetchMyTeam();
+    }
+  }, [id, user, hasRole]);
+
+  const fetchMyTeam = () => {
+    hackathonService.myTeam(id).then(res => setMyTeam(res.data.data)).catch(() => setMyTeam(null));
+  };
+
+  const handleJoin = (values) => {
+    teamService.join(values.joinCode).then(() => {
+      message.success('Joined team');
+      setJoinModalVisible(false);
+      fetchMyTeam();
+    }).catch(e => message.error(e.response?.data?.message || 'Failed to join'));
+  };
+
+  const handleCreateTeam = (values) => {
+    teamService.create(id, values).then(() => {
+      message.success('Team created');
+      setCreateModalVisible(false);
+      fetchMyTeam();
+    }).catch(e => message.error(e.response?.data?.message || 'Failed to create team'));
   };
 
   return (
     <main className="panel">
-      <h1>Hackathon details</h1>
-      <p>Teams, submissions, leaderboard, PDF and Excel exports.</p>
+      <h1>{hackathon?.title || 'Hackathon details'}</h1>
+      <p>{hackathon?.description}</p>
       
       {hasRole?.(['ROLE_ADMIN', 'ROLE_MANAGER']) ? (
         <div style={{ marginTop: 20, marginBottom: 20 }}>
@@ -44,12 +72,44 @@ export function HackathonDetailPage() {
           ) : (
             <p>Loading analytics...</p>
           )}
+          <Button icon={<Download size={16}/>}>Export</Button>
         </div>
+      ) : user ? (
+        myTeam ? (
+          <MyTeamDashboard team={myTeam} onTeamUpdate={fetchMyTeam} />
+        ) : (
+          <div style={{ marginTop: 20 }}>
+            <Button type="primary" onClick={() => setCreateModalVisible(true)} style={{ marginRight: 16 }}>Create Team</Button>
+            <Button onClick={() => setJoinModalVisible(true)}>Join Team</Button>
+            
+            <Modal title="Join Team" open={joinModalVisible} onCancel={() => setJoinModalVisible(false)} footer={null}>
+              <Form layout="vertical" onFinish={handleJoin}>
+                <Form.Item name="joinCode" label="Join Code" rules={[{ required: true }]}>
+                  <Input placeholder="Enter the team's join code" />
+                </Form.Item>
+                <Button type="primary" htmlType="submit">Join</Button>
+              </Form>
+            </Modal>
+            
+            <Modal title="Create Team" open={createModalVisible} onCancel={() => setCreateModalVisible(false)} footer={null}>
+              <Form layout="vertical" onFinish={handleCreateTeam}>
+                <Form.Item name="name" label="Team Name" rules={[{ required: true }]}>
+                  <Input />
+                </Form.Item>
+                <Form.Item name="description" label="Description">
+                  <Input.TextArea />
+                </Form.Item>
+                <Form.Item name="techStack" label="Tech Stack">
+                  <Input />
+                </Form.Item>
+                <Button type="primary" htmlType="submit">Create</Button>
+              </Form>
+            </Modal>
+          </div>
+        )
       ) : (
-        <Button type="primary" onClick={handleParticipate} style={{ marginRight: 16 }}>Participate</Button>
+        <Button type="primary" onClick={() => navigate('/login')}>Participate</Button>
       )}
-      
-      <Button icon={<Download size={16}/>}>Export</Button>
     </main>
   );
 }

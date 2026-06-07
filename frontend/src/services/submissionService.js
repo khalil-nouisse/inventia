@@ -1,1 +1,1 @@
-import { api } from './api'; export const submissionService = { save: (id, p) => api.post(`/teams/${id}/submission`, p) };
+import { api } from './api'; export const submissionService = { save: (id, p) => api.post(`/teams/${id}/submission`, p), delete: (id) => api.delete(`/teams/${id}/submission`), get: (id) => api.get(`/teams/${id}/submission`) };

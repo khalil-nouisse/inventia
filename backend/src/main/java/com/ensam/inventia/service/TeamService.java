@@ -1,1 +1,1 @@
-package com.ensam.inventia.service; public interface TeamService {}
+package com.ensam.inventia.service; import com.ensam.inventia.dto.request.*; import com.ensam.inventia.dto.response.*; public interface TeamService { TeamResponse create(Long hackathonId, TeamRequest r); TeamResponse get(Long id); TeamResponse add(Long id, AddMemberRequest r); TeamResponse join(JoinTeamRequest r); void delete(Long id); }

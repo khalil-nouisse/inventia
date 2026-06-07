@@ -1,1 +1,1 @@
-export default function Footer(){ return <footer className="footer">ENSAM Meknes - Frameworks J2EE et Spring - 2025/2026</footer>; }
+export default function Footer(){ return <footer className="footer">&copy; {new Date().getFullYear()} Inventia Corporate. All rights reserved.</footer>; }

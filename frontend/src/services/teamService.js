@@ -1,1 +1,1 @@
-import { api } from './api'; export const teamService = { create: (id, p) => api.post(`/hackathons/${id}/teams`, p), get: (id) => api.get(`/teams/${id}`) };
+import { api } from './api'; export const teamService = { create: (id, p) => api.post(`/hackathons/${id}/teams`, p), get: (id) => api.get(`/teams/${id}`), join: (joinCode) => api.post(`/teams/join`, { joinCode }), delete: (id) => api.delete(`/teams/${id}`), getChat: (id) => api.get(`/teams/${id}/chat`), sendChat: (id, content) => api.post(`/teams/${id}/chat`, { content }) };
