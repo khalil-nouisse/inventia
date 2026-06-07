@@ -7,7 +7,7 @@ spring:
     password: ${DB_PASSWORD:inventia}
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: create-drop
     open-in-view: false
     defer-datasource-initialization: true
   sql:
