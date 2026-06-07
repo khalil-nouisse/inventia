@@ -3,7 +3,24 @@ export function LandingPage(){return <main className="hero"><section><img src="/
 export function LoginPage(){const {login}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{const u=await login(v); if(u?.role==='ROLE_ADMIN') navigate('/dashboard'); else navigate('/hackathons');}catch(e){message.error('Login failed');}}; return <main className="panel"><h1>Login</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="email" label="Email" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Login</Button></Form></main>}
 export function RegisterPage(){return <main className="panel"><h1>Register</h1><Form layout="vertical"><Form.Item label="Email"><Input /></Form.Item><Button type="primary">Create account</Button></Form></main>}
 export function HackathonListPage(){const {hasRole}=useAuth(); const [items,setItems]=useState([]); useEffect(()=>{hackathonService.list().then(r=>setItems(r.data.data.content)).catch(()=>setItems([]));},[]); return <main><div className="pagehead"><h1>Hackathons</h1>{hasRole?.(['ROLE_MANAGER','ROLE_ADMIN']) && <Link className="primary" to="/hackathons/new"><Plus size={16}/>Create</Link>}</div><div className="grid">{items.map(h=><HackathonCard key={h.id} hackathon={h}/>)}</div></main>}
-export function HackathonDetailPage(){return <main className="panel"><h1>Hackathon details</h1><p>Teams, submissions, leaderboard, PDF and Excel exports.</p><Button icon={<Download size={16}/>}>Export</Button></main>}
+export function HackathonDetailPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleParticipate = () => {
+    if (!user) navigate('/login');
+    else message.info('Participation logic goes here');
+  };
+
+  return (
+    <main className="panel">
+      <h1>Hackathon details</h1>
+      <p>Teams, submissions, leaderboard, PDF and Excel exports.</p>
+      <Button type="primary" onClick={handleParticipate} style={{ marginRight: 16 }}>Participate</Button>
+      <Button icon={<Download size={16}/>}>Export</Button>
+    </main>
+  );
+}
 export function HackathonFormPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
