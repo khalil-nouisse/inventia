@@ -1,8 +1,8 @@
-import { Button, Form, Input, DatePicker, InputNumber, message } from 'antd'; import { useEffect, useState } from 'react'; import { Link, useNavigate } from 'react-router-dom'; import { BarChart3, Download, Plus } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService';
+import { Button, Form, Input, DatePicker, InputNumber, message, Table, Select, Popconfirm } from 'antd'; import { useEffect, useState } from 'react'; import { Link, useNavigate } from 'react-router-dom'; import { BarChart3, Download, Plus } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService'; import { userService } from '../services/userService';
 export function LandingPage(){return <main className="hero"><section><img src="/assets/logo-dark.png" alt="InventIA" /><h1>Hackathon operations for ENSAM teams</h1><p>Manage registrations, teams, submissions, scores, leaderboards, and exports from one role-protected workspace.</p><Link className="primary" to="/hackathons">View hackathons</Link></section></main>}
-export function LoginPage(){const {login}=useAuth(); return <main className="panel"><h1>Login</h1><Form layout="vertical" onFinish={login}><Form.Item name="email" label="Email" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Login</Button></Form></main>}
+export function LoginPage(){const {login}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{const u=await login(v); if(u?.role==='ROLE_ADMIN') navigate('/dashboard'); else navigate('/hackathons');}catch(e){message.error('Login failed');}}; return <main className="panel"><h1>Login</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="email" label="Email" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Login</Button></Form></main>}
 export function RegisterPage(){return <main className="panel"><h1>Register</h1><Form layout="vertical"><Form.Item label="Email"><Input /></Form.Item><Button type="primary">Create account</Button></Form></main>}
-export function HackathonListPage(){const [items,setItems]=useState([]); useEffect(()=>{hackathonService.list().then(r=>setItems(r.data.data.content)).catch(()=>setItems([]));},[]); return <main><div className="pagehead"><h1>Hackathons</h1><Link className="primary" to="/hackathons/new"><Plus size={16}/>Create</Link></div><div className="grid">{items.map(h=><HackathonCard key={h.id} hackathon={h}/>)}</div></main>}
+export function HackathonListPage(){const {hasRole}=useAuth(); const [items,setItems]=useState([]); useEffect(()=>{hackathonService.list().then(r=>setItems(r.data.data.content)).catch(()=>setItems([]));},[]); return <main><div className="pagehead"><h1>Hackathons</h1>{hasRole?.(['ROLE_MANAGER','ROLE_ADMIN']) && <Link className="primary" to="/hackathons/new"><Plus size={16}/>Create</Link>}</div><div className="grid">{items.map(h=><HackathonCard key={h.id} hackathon={h}/>)}</div></main>}
 export function HackathonDetailPage(){return <main className="panel"><h1>Hackathon details</h1><p>Teams, submissions, leaderboard, PDF and Excel exports.</p><Button icon={<Download size={16}/>}>Export</Button></main>}
 export function HackathonFormPage() {
   const navigate = useNavigate();
@@ -73,7 +73,161 @@ export function LeaderboardPage(){return <main className="panel"><h1>Leaderboard
 export function ScoringPage(){return <main className="panel"><h1>Scoring</h1></main>}
 export function DashboardPage(){const [s,setS]=useState(null); useEffect(()=>{dashboardService.manager().then(r=>setS(r.data.data)).catch(()=>{});},[]); const data=[{name:'Users',value:s?.totalUsers||0},{name:'Hackathons',value:s?.totalHackathons||0},{name:'Teams',value:s?.totalTeams||0}]; return <main><div className="pagehead"><h1><BarChart3/>Dashboard</h1></div><div className="kpis"><KpiCard label="Users" value={s?.totalUsers||0}/><KpiCard label="Hackathons" value={s?.totalHackathons||0}/><KpiCard label="Teams" value={s?.totalTeams||0}/><KpiCard label="Submissions" value={s?.totalSubmissions||0}/></div><div className="charts"><SubmissionRateChart data={data}/><ScoreDistributionChart data={data}/></div></main>}
 export function UserDashboardPage(){return <main className="panel"><h1>My work</h1></main>}
-export function AdminUserManagementPage(){return <main className="panel"><h1>User management</h1></main>}
+export function AdminUserManagementPage(){
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [roleFilter, setRoleFilter] = useState('');
+
+  const fetchUsers = async () => {
+    setLoading(true);
+    try {
+      const { data } = await userService.list();
+      setUsers(data.data.content || []);
+    } catch (e) {
+      message.error('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  const handleRoleChange = async (id, role) => {
+    try {
+      await userService.updateRole(id, role);
+      message.success('Role updated');
+      fetchUsers();
+    } catch (e) {
+      message.error('Failed to update role');
+    }
+  };
+
+  const handleEnable = async (id) => {
+    try {
+      await userService.enable(id);
+      message.success('User enabled');
+      fetchUsers();
+    } catch (e) {
+      message.error(e.response?.data?.message || 'Failed to enable user');
+    }
+  };
+
+  const handleDisable = async (id) => {
+    try {
+      await userService.disable(id);
+      message.success('User disabled');
+      fetchUsers();
+    } catch (e) {
+      message.error(e.response?.data?.message || 'Failed to disable user');
+    }
+  };
+
+  const columns = [
+    { title: 'First Name', dataIndex: 'firstName', key: 'firstName' },
+    { title: 'Last Name', dataIndex: 'lastName', key: 'lastName' },
+    { title: 'Username', dataIndex: 'username', key: 'username' },
+    { title: 'Email', dataIndex: 'email', key: 'email' },
+    {
+      title: 'Role',
+      dataIndex: 'role',
+      key: 'role',
+      render: (role, record) => (
+        <Select
+          value={role}
+          style={{ width: 150 }}
+          onChange={(val) => handleRoleChange(record.id, val)}
+          options={[
+            { value: 'ROLE_USER', label: 'User' },
+            { value: 'ROLE_MANAGER', label: 'Manager' },
+            { value: 'ROLE_ADMIN', label: 'Admin' },
+          ]}
+        />
+      ),
+    },
+    {
+      title: 'Status',
+      dataIndex: 'enabled',
+      key: 'enabled',
+      render: (enabled) => (enabled ? 'Active' : 'Disabled'),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        record.enabled ? (
+          <Popconfirm
+            title="Disable user?"
+            onConfirm={() => handleDisable(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button danger size="small">Disable</Button>
+          </Popconfirm>
+        ) : (
+          <Popconfirm
+            title="Enable user?"
+            onConfirm={() => handleEnable(record.id)}
+            okText="Yes"
+            cancelText="No"
+          >
+            <Button type="primary" size="small">Enable</Button>
+          </Popconfirm>
+        )
+      ),
+    },
+  ];
+
+  const filteredUsers = users.filter((u) => {
+    const search = searchQuery.toLowerCase();
+    const matchSearch =
+      (u.username || '').toLowerCase().includes(search) ||
+      (u.email || '').toLowerCase().includes(search) ||
+      (u.firstName || '').toLowerCase().includes(search) ||
+      (u.lastName || '').toLowerCase().includes(search);
+    const matchRole = roleFilter ? u.role === roleFilter : true;
+    return matchSearch && matchRole;
+  });
+
+  return (
+    <main>
+      <div className="pagehead">
+        <h1>User management</h1>
+      </div>
+      <div style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
+        <Input.Search
+          placeholder="Search by name, username, email"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          style={{ width: 300 }}
+          allowClear
+        />
+        <Select
+          placeholder="Filter by role"
+          value={roleFilter}
+          onChange={setRoleFilter}
+          style={{ width: 150 }}
+          allowClear
+          options={[
+            { value: '', label: 'All Roles' },
+            { value: 'ROLE_USER', label: 'User' },
+            { value: 'ROLE_MANAGER', label: 'Manager' },
+            { value: 'ROLE_ADMIN', label: 'Admin' },
+          ]}
+        />
+      </div>
+      <Table
+        dataSource={filteredUsers}
+        columns={columns}
+        rowKey="id"
+        loading={loading}
+        pagination={{ pageSize: 10 }}
+      />
+    </main>
+  );
+}
 export function ProfilePage(){const {user}=useAuth(); return <main className="panel"><h1>Profile</h1><p>{user?.email}</p></main>}
 export function NotFoundPage(){return <main className="panel"><h1>Not found</h1></main>}
 export function UnauthorizedPage(){return <main className="panel"><h1>Unauthorized</h1></main>}

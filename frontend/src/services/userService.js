@@ -1,1 +1,1 @@
-import { api } from './api'; export const userService = { list: () => api.get('/users'), updateRoles: (id, roles) => api.put(`/users/${id}/roles`, { roles }) };
+import { api } from './api'; export const userService = { list: () => api.get('/users'), updateRole: (id, role) => api.put(`/users/${id}/role`, { role }), disable: (id) => api.delete(`/users/${id}`), enable: (id) => api.post(`/users/${id}/enable`) };
