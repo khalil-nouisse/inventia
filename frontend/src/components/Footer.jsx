@@ -1,1 +1,0 @@
-export default function Footer(){ return <footer className="footer">&copy; {new Date().getFullYear()} Inventia Corporate. All rights reserved.</footer>; }

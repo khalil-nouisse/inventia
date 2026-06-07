@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ConfigProvider, theme } from 'antd';
-import Navbar from './components/Navbar'; import Footer from './components/Footer'; import PrivateRoute from './routes/PrivateRoute'; import RoleRoute from './routes/RoleRoute';
+import Navbar from './components/Navbar'; import PrivateRoute from './routes/PrivateRoute'; import RoleRoute from './routes/RoleRoute';
 import { AdminUserManagementPage, DashboardPage, HackathonDetailPage, HackathonFormPage, HackathonListPage, LandingPage, LeaderboardPage, LoginPage, NotFoundPage, ProfilePage, RegisterPage, ScoringPage, SubmissionFormPage, TeamDetailPage, TeamListPage, UnauthorizedPage, UserDashboardPage } from './pages/pages';
 import { useTheme } from './context/ThemeContext';
 
@@ -45,7 +45,6 @@ export default function App(){
           </Route>
           <Route path="*" element={<NotFoundPage/>}/>
         </Routes>
-        <Footer/>
       </BrowserRouter>
     </ConfigProvider>
   );
