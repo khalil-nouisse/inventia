@@ -1,4 +1,4 @@
-INSERT IGNORE INTO roles(id, name) VALUES (1, 'ROLE_ADMIN'), (2, 'ROLE_MANAGER'), (3, 'ROLE_USER');
+INSERT IGNORE INTO roles(id, name) VALUES (1, 'ROLE_ADMIN'), (2, 'ROLE_MANAGER'), (3, 'ROLE_PARTICIPANT');
 INSERT IGNORE INTO users(id, username, email, password, first_name, last_name, enabled, role_id, created_at, updated_at) VALUES
 (1, 'admin', 'admin@inventia.local', '$2a$10$Jov4M9AEr1H77cXKIy0k8ug.6C/OXRMvNRc039uye.tVdF3sluPNq', 'Admin', 'InventIA', true, 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 'manager', 'manager@inventia.local', '$2a$10$Jov4M9AEr1H77cXKIy0k8ug.6C/OXRMvNRc039uye.tVdF3sluPNq', 'Manager', 'InventIA', true, 2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),

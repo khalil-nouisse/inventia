@@ -1,7 +1,7 @@
-import { Button, Form, Input, DatePicker, InputNumber, message, Table, Select, Popconfirm } from 'antd'; import { useEffect, useState } from 'react'; import { Link, useNavigate } from 'react-router-dom'; import { BarChart3, Download, Plus } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService'; import { userService } from '../services/userService';
-export function LandingPage(){return <main className="hero"><section><img src="/assets/logo-dark.png" alt="InventIA" /><h1>Hackathon operations for ENSAM teams</h1><p>Manage registrations, teams, submissions, scores, leaderboards, and exports from one role-protected workspace.</p><Link className="primary" to="/hackathons">View hackathons</Link></section></main>}
+import { Button, Form, Input, DatePicker, InputNumber, message, Table, Select, Popconfirm, Modal } from 'antd'; import { useEffect, useState } from 'react'; import { Link, useNavigate } from 'react-router-dom'; import { BarChart3, Download, Plus } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService'; import { userService } from '../services/userService';
+export function LandingPage(){return <main className="hero"><section><img src="/assets/logo-dark.png" alt="InventIA" className="logo" /><h1>Hackathon operations for ENSAM teams</h1><p>Manage registrations, teams, submissions, scores, leaderboards, and exports from one role-protected workspace.</p><Link className="primary" to="/hackathons">View hackathons</Link></section></main>}
 export function LoginPage(){const {login}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{const u=await login(v); if(u?.role==='ROLE_ADMIN') navigate('/dashboard'); else navigate('/hackathons');}catch{message.error('Login failed');}}; return <main className="panel"><h1>Login</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="email" label="Email" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Login</Button></Form></main>}
-export function RegisterPage(){return <main className="panel"><h1>Register</h1><Form layout="vertical"><Form.Item label="Email"><Input /></Form.Item><Button type="primary">Create account</Button></Form></main>}
+export function RegisterPage(){const {register}=useAuth(); const navigate=useNavigate(); const onFinish=async(v)=>{try{await register(v); navigate('/hackathons');}catch{message.error('Registration failed');}}; return <main className="panel"><h1>Register</h1><Form layout="vertical" onFinish={onFinish}><Form.Item name="firstName" label="First Name" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="lastName" label="Last Name" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="username" label="Username" rules={[{required:true}]}><Input /></Form.Item><Form.Item name="email" label="Email" rules={[{required:true,type:'email'}]}><Input /></Form.Item><Form.Item name="password" label="Password" rules={[{required:true,min:6}]}><Input.Password /></Form.Item><Button type="primary" htmlType="submit">Create account</Button></Form></main>}
 export function HackathonListPage(){const {hasRole}=useAuth(); const [items,setItems]=useState([]); useEffect(()=>{hackathonService.list().then(r=>setItems(r.data.data.content)).catch(()=>setItems([]));},[]); return <main><div className="pagehead"><h1>Hackathons</h1>{hasRole?.(['ROLE_MANAGER','ROLE_ADMIN']) && <Link className="primary" to="/hackathons/new"><Plus size={16}/>Create</Link>}</div><div className="grid">{items.map(h=><HackathonCard key={h.id} hackathon={h}/>)}</div></main>}
 export function HackathonDetailPage() {
   const { user } = useAuth();
@@ -95,6 +95,8 @@ export function AdminUserManagementPage(){
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [form] = Form.useForm();
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -112,6 +114,18 @@ export function AdminUserManagementPage(){
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchUsers();
   }, []);
+
+  const handleCreateUser = async (values) => {
+    try {
+      await userService.create(values);
+      message.success('User created successfully');
+      setIsModalVisible(false);
+      form.resetFields();
+      fetchUsers();
+    } catch (e) {
+      message.error(e.response?.data?.message || 'Failed to create user');
+    }
+  };
 
   const handleRoleChange = async (id, role) => {
     try {
@@ -158,7 +172,7 @@ export function AdminUserManagementPage(){
           style={{ width: 150 }}
           onChange={(val) => handleRoleChange(record.id, val)}
           options={[
-            { value: 'ROLE_USER', label: 'User' },
+            { value: 'ROLE_PARTICIPANT', label: 'Participant' },
             { value: 'ROLE_MANAGER', label: 'Manager' },
             { value: 'ROLE_ADMIN', label: 'Admin' },
           ]}
@@ -213,6 +227,7 @@ export function AdminUserManagementPage(){
     <main>
       <div className="pagehead">
         <h1>User management</h1>
+        <Button type="primary" onClick={() => setIsModalVisible(true)}><Plus size={16}/> Create user</Button>
       </div>
       <div style={{ marginBottom: 16, display: 'flex', gap: 16 }}>
         <Input.Search
@@ -230,7 +245,7 @@ export function AdminUserManagementPage(){
           allowClear
           options={[
             { value: '', label: 'All Roles' },
-            { value: 'ROLE_USER', label: 'User' },
+            { value: 'ROLE_PARTICIPANT', label: 'Participant' },
             { value: 'ROLE_MANAGER', label: 'Manager' },
             { value: 'ROLE_ADMIN', label: 'Admin' },
           ]}
@@ -243,6 +258,32 @@ export function AdminUserManagementPage(){
         loading={loading}
         pagination={{ pageSize: 10 }}
       />
+      <Modal
+        title="Create User"
+        open={isModalVisible}
+        onCancel={() => {
+          setIsModalVisible(false);
+          form.resetFields();
+        }}
+        footer={null}
+      >
+        <Form layout="vertical" form={form} onFinish={handleCreateUser}>
+          <Form.Item name="firstName" label="First Name" rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="lastName" label="Last Name" rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="username" label="Username" rules={[{ required: true }]}><Input /></Form.Item>
+          <Form.Item name="email" label="Email" rules={[{ required: true, type: 'email' }]}><Input /></Form.Item>
+          <Form.Item name="password" label="Password" rules={[{ required: true, min: 6 }]}><Input.Password /></Form.Item>
+          <Form.Item name="role" label="Role" rules={[{ required: true }]}>
+            <Select options={[
+              { value: 'ROLE_PARTICIPANT', label: 'Participant' },
+              { value: 'ROLE_MANAGER', label: 'Manager' }
+            ]} />
+          </Form.Item>
+          <Form.Item>
+            <Button type="primary" htmlType="submit">Create</Button>
+          </Form.Item>
+        </Form>
+      </Modal>
     </main>
   );
 }

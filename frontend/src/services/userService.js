@@ -1,1 +1,1 @@
-import { api } from './api'; export const userService = { list: () => api.get('/users'), updateRole: (id, role) => api.put(`/users/${id}/role`, { role }), disable: (id) => api.delete(`/users/${id}`), enable: (id) => api.post(`/users/${id}/enable`) };
+import { api } from './api'; export const userService = { create: (data) => api.post('/users', data), list: () => api.get('/users'), updateRole: (id, role) => api.put(`/users/${id}/role`, { role }), disable: (id) => api.delete(`/users/${id}`), enable: (id) => api.post(`/users/${id}/enable`) };
