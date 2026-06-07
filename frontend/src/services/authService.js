@@ -1,1 +1,1 @@
-import { api } from './api'; export const authService = { login: (p) => api.post('/auth/login', p), register: (p) => api.post('/auth/register', p), me: () => api.get('/auth/me') };
+import { api } from './api'; export const authService = { login: (p) => api.post('/auth/login', p), register: (p) => api.post('/auth/register', p), me: () => api.get('/auth/me'), logout: () => api.post('/auth/logout') };
