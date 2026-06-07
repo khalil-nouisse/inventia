@@ -1,1 +1,1 @@
-import { api } from './api'; export const hackathonService = { list: () => api.get('/hackathons'), create: (p) => api.post('/hackathons', p), get: (id) => api.get(`/hackathons/${id}`) };
+import { api } from './api'; export const hackathonService = { list: () => api.get('/hackathons'), get: (id) => api.get(`/hackathons/${id}`), create: (data) => api.post('/hackathons', data), update: (id, data) => api.put(`/hackathons/${id}`, data), delete: (id) => api.delete(`/hackathons/${id}`), analytics: (id) => api.get(`/hackathons/${id}/analytics`) };
