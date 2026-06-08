@@ -1,35 +1,42 @@
-import { useState, useEffect } from 'react';
-import { Form, Input, Button, List, message, Space, Card, Modal, Typography } from 'antd';
+import { useCallback, useState, useEffect } from 'react';
+import { Form, Input, Button, List, message, Space, Card, Modal, Typography, Upload } from 'antd';
 import { teamService } from '../services/teamService';
 import { submissionService } from '../services/submissionService';
-import { Trash2, Send } from 'lucide-react';
+import { Download, FileArchive, Trash2, Send } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { saveBlob } from '../services/exportService';
 
 const { Text, Paragraph } = Typography;
+const MAX_ZIP_SIZE_MB = 200;
+
+const apiError = (error, fallback = 'Error') => (
+  error.response?.data?.error || error.response?.data?.message || fallback
+);
 
 export function MyTeamDashboard({ team, onTeamUpdate }) {
   const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [messageText, setMessageText] = useState('');
   const [submission, setSubmission] = useState(null);
-  const [loadingChat, setLoadingChat] = useState(false);
+  const [artifact, setArtifact] = useState([]);
   
-  const isLeader = team.members.some(m => m.user.id === user.id && m.role === 'LEADER');
+  const isLeader = team.members.some(m => m.user.id === user.id && m.memberRole === 'LEADER');
+  const isMember = team.members.some(m => m.user.id === user.id);
 
-  const fetchChat = () => {
-    teamService.getChat(team.id).then(res => setMessages(res.data.data)).catch(console.error);
-  };
+  const fetchChat = useCallback(() => {
+    teamService.getChat(team.id).then(res => setMessages(res.data.data)).catch(() => {});
+  }, [team.id]);
 
-  const fetchSubmission = () => {
+  const fetchSubmission = useCallback(() => {
     submissionService.get(team.id).then(res => setSubmission(res.data.data)).catch(() => setSubmission(null));
-  };
+  }, [team.id]);
 
   useEffect(() => {
     fetchChat();
     fetchSubmission();
     const interval = setInterval(fetchChat, 5000);
     return () => clearInterval(interval);
-  }, [team.id]);
+  }, [fetchChat, fetchSubmission]);
 
   const handleSendMessage = () => {
     if(!messageText.trim()) return;
@@ -40,17 +47,33 @@ export function MyTeamDashboard({ team, onTeamUpdate }) {
   };
 
   const handleSubmission = (values) => {
-    submissionService.save(team.id, values).then(() => {
+    const file = artifact[0]?.originFileObj;
+    if (!submission && !file) {
+      message.error('Upload a ZIP archive before submitting');
+      return;
+    }
+    const request = submission ? submissionService.update : submissionService.save;
+    request(team.id, values, file).then(() => {
       message.success('Submission saved');
+      setArtifact([]);
       fetchSubmission();
-    }).catch(e => message.error(e.response?.data?.message || 'Error'));
+    }).catch(e => message.error(apiError(e)));
+  };
+
+  const handleDownloadArtifact = async () => {
+    try {
+      const res = await submissionService.download(team.id);
+      saveBlob(res.data, submission.artifactFileName || 'submission.zip');
+    } catch (e) {
+      message.error(apiError(e, 'Download failed'));
+    }
   };
 
   const handleDeleteSubmission = () => {
     submissionService.delete(team.id).then(() => {
       message.success('Submission deleted');
       fetchSubmission();
-    }).catch(e => message.error(e.response?.data?.message || 'Error'));
+    }).catch(e => message.error(apiError(e)));
   };
 
   const handleDeleteTeam = () => {
@@ -61,15 +84,15 @@ export function MyTeamDashboard({ team, onTeamUpdate }) {
         teamService.delete(team.id).then(() => {
           message.success('Team deleted');
           onTeamUpdate();
-        }).catch(e => message.error(e.response?.data?.message || 'Error'));
+        }).catch(e => message.error(apiError(e)));
       }
     });
   };
 
   return (
-    <div style={{ display: 'flex', gap: '2rem', marginTop: '2rem' }}>
-      <div style={{ flex: 1 }}>
-        <Card title={`Team: ${team.name}`} style={{ marginBottom: '1rem' }}>
+    <section className="team-workspace">
+      <div className="team-workspace__main">
+        <Card className="workspace-card ant-workspace-card" title={<span>Team: {team.name}</span>}>
           <p>{team.description}</p>
           <Paragraph>
             <Text strong>Join Code (Share with others): </Text>
@@ -81,7 +104,7 @@ export function MyTeamDashboard({ team, onTeamUpdate }) {
             dataSource={team.members}
             renderItem={m => (
               <List.Item>
-                {m.user.username} {m.role === 'LEADER' && <Text type="secondary">(Leader)</Text>}
+                {m.user.username} {m.memberRole === 'LEADER' && <Text type="secondary">(Leader)</Text>}
               </List.Item>
             )}
           />
@@ -92,46 +115,69 @@ export function MyTeamDashboard({ team, onTeamUpdate }) {
           )}
         </Card>
 
-        <Card title="Submission">
+        <Card className="workspace-card ant-workspace-card" title={<span>Submission</span>}>
           {submission ? (
-            <div style={{ marginBottom: '1rem' }}>
+            <div className="submission-summary">
               <p><strong>Title:</strong> {submission.title}</p>
               <p><strong>Description:</strong> {submission.description}</p>
               <p><strong>Repository:</strong> <a href={submission.repositoryUrl} target="_blank" rel="noreferrer">{submission.repositoryUrl}</a></p>
-              <p><strong>Demo:</strong> <a href={submission.demoUrl} target="_blank" rel="noreferrer">{submission.demoUrl}</a></p>
+              {submission.demoUrl && <p><strong>Demo:</strong> <a href={submission.demoUrl} target="_blank" rel="noreferrer">{submission.demoUrl}</a></p>}
+              <p><strong>Artifact:</strong> {submission.artifactFileName} ({Math.ceil((submission.artifactSize || 0) / 1024)} KB)</p>
+              <Space>
+                <Button icon={<Download size={16}/>} onClick={handleDownloadArtifact}>Download ZIP</Button>
+                {isLeader && <Button danger onClick={handleDeleteSubmission}>Delete Submission</Button>}
+              </Space>
               {isLeader && (
-                <Button danger onClick={handleDeleteSubmission}>Delete Submission</Button>
+                null
               )}
             </div>
           ) : (
             <p>No submission yet.</p>
           )}
-          {isLeader && (
+          {isMember && (
             <Form layout="vertical" onFinish={handleSubmission} initialValues={submission}>
               <Form.Item name="title" label="Title" rules={[{ required: true }]}><Input /></Form.Item>
               <Form.Item name="description" label="Description" rules={[{ required: true }]}><Input.TextArea /></Form.Item>
               <Form.Item name="repositoryUrl" label="Repo URL"><Input /></Form.Item>
               <Form.Item name="demoUrl" label="Demo URL"><Input /></Form.Item>
               <Form.Item name="techStack" label="Tech Stack"><Input /></Form.Item>
+              <Form.Item label={submission ? 'Replace ZIP artifact' : 'Project ZIP artifact'} required={!submission}>
+                <Upload
+                  accept=".zip,application/zip,application/x-zip-compressed"
+                  beforeUpload={(file) => {
+                    if (!file.name.toLowerCase().endsWith('.zip')) {
+                      message.error('Only .zip files are accepted');
+                      return Upload.LIST_IGNORE;
+                    }
+                    if (file.size > MAX_ZIP_SIZE_MB * 1024 * 1024) {
+                      message.error(`ZIP file must be ${MAX_ZIP_SIZE_MB}MB or smaller`);
+                      return Upload.LIST_IGNORE;
+                    }
+                    setArtifact([{ ...file, originFileObj: file }]);
+                    return false;
+                  }}
+                  fileList={artifact}
+                  maxCount={1}
+                  onRemove={() => setArtifact([])}
+                >
+                  <Button icon={<FileArchive size={16}/>}>Select ZIP</Button>
+                </Upload>
+              </Form.Item>
               <Button type="primary" htmlType="submit">Save Submission</Button>
             </Form>
           )}
         </Card>
       </div>
 
-      <div style={{ flex: 1 }}>
-        <Card title="Secure Team Chat" bodyStyle={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
-          <div style={{ flex: 1, overflowY: 'auto', marginBottom: '1rem' }}>
+      <div className="team-workspace__chat">
+        <Card className="workspace-card ant-workspace-card chat-card" title={<span>Secure Team Chat</span>} bodyStyle={{ display: 'flex', flexDirection: 'column', height: '500px' }}>
+          <div className="chat-feed">
             <List
               dataSource={messages}
               renderItem={msg => (
-                <List.Item style={{ justifyContent: msg.sender.id === user.id ? 'flex-end' : 'flex-start', border: 'none', padding: '4px 0' }}>
-                  <div style={{ 
-                    background: msg.sender.id === user.id ? '#1890ff' : '#f0f2f5', 
-                    color: msg.sender.id === user.id ? 'white' : 'black',
-                    padding: '8px 12px', borderRadius: '12px', maxWidth: '80%'
-                  }}>
-                    <div style={{ fontSize: '10px', marginBottom: '4px', opacity: 0.8 }}>{msg.sender.username}</div>
+                <List.Item className={msg.sender.id === user.id ? 'chat-message chat-message--mine' : 'chat-message'}>
+                  <div>
+                    <span>{msg.sender.username}</span>
                     {msg.content}
                   </div>
                 </List.Item>
@@ -149,6 +195,6 @@ export function MyTeamDashboard({ team, onTeamUpdate }) {
           </Space.Compact>
         </Card>
       </div>
-    </div>
+    </section>
   );
 }

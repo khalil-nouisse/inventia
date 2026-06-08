@@ -1,1 +1,1 @@
-package com.ensam.inventia.dto.response; import java.time.LocalDateTime; public record SubmissionResponse(Long id,String title,String description,String repositoryUrl,String demoUrl,String techStack,LocalDateTime submittedAt,Long teamId) {}
+package com.ensam.inventia.dto.response; import java.time.LocalDateTime; public record SubmissionResponse(Long id,String title,String description,String repositoryUrl,String demoUrl,String techStack,LocalDateTime submittedAt,Long teamId,String artifactFileName,Long artifactSize) {}

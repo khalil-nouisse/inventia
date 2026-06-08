@@ -1,1 +1,1 @@
-package com.ensam.inventia.dto.request; import jakarta.validation.constraints.*; import org.hibernate.validator.constraints.URL; public record SubmissionRequest(@NotBlank @Size(max=150) String title,@NotBlank @Size(max=3000) String description,@NotBlank @URL String repositoryUrl,@URL String demoUrl,String techStack) {}
+package com.ensam.inventia.dto.request; import jakarta.validation.constraints.*; public record SubmissionRequest(@NotBlank @Size(max=150) String title,@NotBlank @Size(max=3000) String description,String repositoryUrl,String demoUrl,String techStack) {}

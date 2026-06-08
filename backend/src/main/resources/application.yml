@@ -1,13 +1,17 @@
 spring:
   application:
     name: inventia
+  servlet:
+    multipart:
+      max-file-size: ${MAX_UPLOAD_SIZE:200MB}
+      max-request-size: ${MAX_REQUEST_SIZE:210MB}
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:inventia}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: ${DB_USER:inventia}
     password: ${DB_PASSWORD:inventia}
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
     open-in-view: false
     defer-datasource-initialization: true
   sql:
@@ -22,6 +26,12 @@ app:
     refresh-token-days: 7
   cors:
     allowed-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  storage:
+    enabled: ${MINIO_ENABLED:true}
+    endpoint: ${MINIO_ENDPOINT:http://localhost:9000}
+    access-key: ${MINIO_ACCESS_KEY:inventia}
+    secret-key: ${MINIO_SECRET_KEY:inventia123}
+    bucket: ${MINIO_BUCKET:inventia-submissions}
 springdoc:
   swagger-ui:
     path: /swagger-ui/index.html

@@ -10,12 +10,13 @@ export default function App(){
     <ConfigProvider theme={{ 
       algorithm: isDark ? theme.darkAlgorithm : theme.defaultAlgorithm,
       token: { 
-        colorPrimary: '#FF1E00', 
-        colorSuccess: '#59CE8F', 
-        colorBgBase: isDark ? '#000000' : '#ffffff', 
-        colorTextBase: isDark ? '#E8F9FD' : '#000000', 
-        borderRadius: 2, 
-        fontFamily: 'JetBrains Mono, IBM Plex Mono, monospace' 
+        colorPrimary: '#002FA7', 
+        colorSuccess: '#129482', 
+        colorError: '#E4002B',
+        colorBgBase: isDark ? '#05070f' : '#ffffff', 
+        colorTextBase: isDark ? '#F8FAFC' : '#111827', 
+        borderRadius: 8, 
+        fontFamily: 'Helvetica Neue, Arial, system-ui, sans-serif' 
       } 
     }}>
       <BrowserRouter>

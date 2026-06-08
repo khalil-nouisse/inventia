@@ -13,3 +13,5 @@ spring:
 app:
   jwt:
     secret: InventIASecretKeyForJwtAccessAndRefreshTokens20252026
+  storage:
+    enabled: false

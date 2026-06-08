@@ -6,7 +6,7 @@ InventIA is a full-stack hackathon and team-formation platform built for the ENS
 
 - Spring Boot 3.3, Java 17, Spring Security JWT, Spring Data JPA, MapStruct, MySQL
 - React 18, Vite, React Router, Axios, Ant Design, Recharts
-- Docker Compose, GitHub Actions, JaCoCo, Vitest, Playwright
+- Docker Compose, MinIO object storage, GitHub Actions, JaCoCo, Vitest, Playwright
 
 ## Run Locally
 
@@ -14,6 +14,15 @@ InventIA is a full-stack hackathon and team-formation platform built for the ENS
 cp .env.example .env
 docker compose up --build
 ```
+
+Services:
+
+| Service | URL | Credentials |
+| --- | --- | --- |
+| Frontend | http://localhost:5173 | App seed users below |
+| Backend API | http://localhost:8080/api | JWT login |
+| MinIO Console | http://localhost:9001 | inventia / inventia123 |
+| MySQL | localhost:3306 | inventia / inventia |
 
 Development:
 
@@ -29,6 +38,8 @@ Seed users:
 | ADMIN | admin@inventia.local | password |
 | MANAGER | manager@inventia.local | password |
 | USER | user@inventia.local | password |
+
+Submission artifacts are uploaded by team leaders as `.zip` files and stored in the MinIO bucket `inventia-submissions`.
 
 ## Academic Context
 
