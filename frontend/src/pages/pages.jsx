@@ -1,4 +1,4 @@
-import { Button, Form, Input, DatePicker, InputNumber, message, Table, Select, Popconfirm, Modal, Dropdown } from 'antd'; import { useCallback, useEffect, useState } from 'react'; import { Link, useNavigate, useParams } from 'react-router-dom'; import { BarChart3, CalendarDays, Download, Plus, Rocket, ShieldCheck, Trophy, UserPlus, Users } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService'; import { userService } from '../services/userService'; import { exportService, saveBlob } from '../services/exportService';
+import { Button, Form, Input, DatePicker, InputNumber, message, Table, Select, Popconfirm, Modal, Dropdown } from 'antd'; import { useCallback, useEffect, useState } from 'react'; import { Link, useNavigate, useParams } from 'react-router-dom'; import { BarChart3, CalendarDays, Download, Plus, Rocket, ShieldCheck, Trophy, UserPlus, Users } from 'lucide-react'; import HackathonCard from '../components/HackathonCard'; import KpiCard from '../components/KpiCard'; import LeaderboardTable from '../components/LeaderboardTable'; import SubmissionRateChart from '../components/SubmissionRateChart'; import ScoreDistributionChart from '../components/ScoreDistributionChart'; import { useAuth } from '../context/AuthContext'; import { hackathonService } from '../services/hackathonService'; import { dashboardService } from '../services/dashboardService'; import { userService } from '../services/userService'; import { exportService, saveBlob } from '../services/exportService'; import { scoreService } from '../services/scoreService';
 import { MyTeamDashboard } from '../components/MyTeamDashboard';
 import { teamService } from '../services/teamService';
 const pageDateFormatter = new Intl.DateTimeFormat('en', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -60,6 +60,7 @@ export function HackathonDetailPage() {
   const { id } = useParams();
   const [hackathon, setHackathon] = useState(null);
   const [analytics, setAnalytics] = useState(null);
+  const [leaderboard, setLeaderboard] = useState([]);
   const [myTeam, setMyTeam] = useState(null);
   const [error, setError] = useState('');
   const [joinModalVisible, setJoinModalVisible] = useState(false);
@@ -71,6 +72,7 @@ export function HackathonDetailPage() {
 
   useEffect(() => {
     hackathonService.get(id).then(res => setHackathon(res.data.data)).catch(() => {});
+    hackathonService.leaderboard(id).then(res => setLeaderboard(res.data.data)).catch(() => setLeaderboard([]));
 
     if (hasRole?.(['ROLE_ADMIN', 'ROLE_MANAGER'])) {
       hackathonService.analytics(id).then(res => setAnalytics(res.data.data)).catch(err => {
@@ -85,20 +87,22 @@ export function HackathonDetailPage() {
     }
   }, [id, user, hasRole, fetchMyTeam]);
 
+  const getApiError = (e, fallback) => e.response?.data?.error || e.response?.data?.message || fallback;
+
   const handleJoin = (values) => {
-    teamService.join(values.joinCode).then(() => {
+    teamService.join(id, values.joinCode).then((res) => {
+      setMyTeam(res.data.data);
       message.success('Joined team');
       setJoinModalVisible(false);
-      fetchMyTeam();
-    }).catch(e => message.error(e.response?.data?.message || 'Failed to join'));
+    }).catch(e => message.error(getApiError(e, 'Failed to join')));
   };
 
   const handleCreateTeam = (values) => {
-    teamService.create(id, values).then(() => {
+    teamService.create(id, values).then((res) => {
+      setMyTeam(res.data.data);
       message.success('Team created');
       setCreateModalVisible(false);
-      fetchMyTeam();
-    }).catch(e => message.error(e.response?.data?.message || 'Failed to create team'));
+    }).catch(e => message.error(getApiError(e, 'Failed to create team')));
   };
 
   const handleExport = async (type) => {
@@ -106,7 +110,19 @@ export function HackathonDetailPage() {
       const response = type === 'pdf' ? await exportService.pdf(id) : await exportService.excel(id);
       saveBlob(response.data, `inventia-hackathon-${id}.${type === 'pdf' ? 'pdf' : 'xlsx'}`);
     } catch (e) {
-      message.error(e.response?.data?.message || 'Export failed');
+      message.error(getApiError(e, 'Export failed'));
+    }
+  };
+
+  const handleAnnounce = async () => {
+    try {
+      const { data } = await hackathonService.announce(id);
+      setHackathon(data.data);
+      const leaderboardResponse = await hackathonService.leaderboard(id);
+      setLeaderboard(leaderboardResponse.data.data);
+      message.success('Leaderboard announced');
+    } catch (e) {
+      message.error(getApiError(e, 'Failed to announce leaderboard'));
     }
   };
 
@@ -154,8 +170,26 @@ export function HackathonDetailPage() {
           ) : (
             <p>Loading analytics...</p>
           )}
+          <div className="action-row">
+            <Link className="primary" to={`/hackathons/${id}/score`}><Trophy size={16}/>Score submissions</Link>
+            <Button type="primary" disabled={hackathon?.status === 'ANNOUNCED'} onClick={handleAnnounce}>
+              {hackathon?.status === 'ANNOUNCED' ? 'Leaderboard announced' : 'Announce leaderboard'}
+            </Button>
+          </div>
+          {leaderboard.length > 0 && (
+            <div className="leaderboard-panel">
+              <div className="section-title"><div><span className="eyebrow">Published ranking</span><h2>Leaderboard</h2></div></div>
+              <LeaderboardTable rows={leaderboard} />
+            </div>
+          )}
         </section>
       ) : user ? (
+        hackathon?.status === 'ANNOUNCED' ? (
+          <section className="workspace-card">
+            <div className="section-title"><div><span className="eyebrow">Final ranking</span><h2>Leaderboard announced</h2></div><Trophy size={34}/></div>
+            <LeaderboardTable rows={leaderboard} />
+          </section>
+        ) : (
         myTeam ? (
           <MyTeamDashboard team={myTeam} onTeamUpdate={fetchMyTeam} />
         ) : (
@@ -192,6 +226,7 @@ export function HackathonDetailPage() {
               </Form>
             </Modal>
           </section>
+        )
         )
       ) : (
         <section className="workspace-card join-card">
@@ -277,7 +312,7 @@ export function TeamListPage(){return <main className="simple-page"><section cla
 export function TeamDetailPage(){return <main className="simple-page"><section className="workspace-card"><span className="eyebrow">Team</span><h1>Team details</h1><p>Team profile, members, and project activity will appear here.</p></section></main>}
 export function SubmissionFormPage(){return <main className="simple-page"><section className="workspace-card"><span className="eyebrow">Submission</span><h1>Project submission</h1><p>Use your hackathon team workspace to submit repository links, demos, and ZIP artifacts.</p></section></main>}
 export function LeaderboardPage(){return <main className="simple-page"><section className="workspace-card"><div className="section-title"><div><span className="eyebrow">Competition ranking</span><h1>Leaderboard</h1></div><Trophy size={34}/></div><LeaderboardTable rows={[]} /></section></main>}
-export function ScoringPage(){return <main className="simple-page"><section className="workspace-card"><span className="eyebrow">Jury</span><h1>Scoring</h1><p>Evaluate projects against the competition criteria.</p></section></main>}
+export function ScoringPage(){const {id}=useParams(); const [rows,setRows]=useState([]); const [hackathon,setHackathon]=useState(null); const fetchRows=useCallback(()=>{hackathonService.scoringSubmissions(id).then(r=>setRows(r.data.data)).catch(()=>setRows([]));},[id]); useEffect(()=>{hackathonService.get(id).then(r=>setHackathon(r.data.data)).catch(()=>{}); fetchRows();},[id,fetchRows]); const handleScore=(submissionId,values)=>{scoreService.score(submissionId,values).then(()=>{message.success('Score saved'); fetchRows();}).catch(e=>message.error(e.response?.data?.error || e.response?.data?.message || 'Failed to save score'));}; return <main className="dashboard-page"><section className="dashboard-hero"><div><span className="eyebrow">Jury workspace</span><h1><Trophy/>Score submissions</h1><p>{hackathon?.title || 'Evaluate submitted projects and prepare the leaderboard.'}</p></div></section>{rows.length>0?<div className="scoring-grid">{rows.map(row=><section className="workspace-card scoring-card" key={row.submissionId}><div className="section-title"><div><span className="eyebrow">{row.teamName}</span><h2>{row.submissionTitle}</h2><p>{row.techStack}</p></div><strong>{row.averageScore ? Number(row.averageScore).toFixed(2) : 'No score'}</strong></div><div className="submission-links">{row.repositoryUrl && <a href={row.repositoryUrl} target="_blank" rel="noreferrer">Repository</a>}{row.demoUrl && <a href={row.demoUrl} target="_blank" rel="noreferrer">Demo</a>}<span>{row.scoreCount} score{row.scoreCount===1?'':'s'}</span></div><Form layout="vertical" onFinish={(values)=>handleScore(row.submissionId,values)}><div className="form-grid"><Form.Item name="technicalScore" label="Technical" rules={[{required:true}]}><InputNumber min={0} max={10} style={{width:'100%'}} /></Form.Item><Form.Item name="creativityScore" label="Creativity" rules={[{required:true}]}><InputNumber min={0} max={10} style={{width:'100%'}} /></Form.Item></div><Form.Item name="presentationScore" label="Presentation" rules={[{required:true}]}><InputNumber min={0} max={10} style={{width:'100%'}} /></Form.Item><Form.Item name="comment" label="Comment"><Input.TextArea rows={3} /></Form.Item><Button type="primary" htmlType="submit">Save score</Button></Form></section>)}</div>:<section className="workspace-card"><span className="eyebrow">No submissions</span><h2>No submitted projects yet</h2><p>Submitted projects will appear here when teams upload their work.</p></section>}</main>}
 export function DashboardPage(){const [s,setS]=useState(null); useEffect(()=>{dashboardService.manager().then(r=>setS(r.data.data)).catch(()=>{});},[]); const data=[{name:'Users',value:s?.totalUsers||0},{name:'Hackathons',value:s?.totalHackathons||0},{name:'Teams',value:s?.totalTeams||0}]; return <main className="dashboard-page"><section className="dashboard-hero"><div><span className="eyebrow">Operations command center</span><h1><BarChart3/>Dashboard</h1><p>Monitor platform activity across hackathons, teams, users, and submissions.</p></div></section><div className="kpis"><KpiCard label="Users" value={s?.totalUsers||0}/><KpiCard label="Hackathons" value={s?.totalHackathons||0}/><KpiCard label="Teams" value={s?.totalTeams||0}/><KpiCard label="Submissions" value={s?.totalSubmissions||0}/></div><div className="charts"><section><div className="section-title"><div><span className="eyebrow">Activity</span><h2>Submission rate</h2></div></div><SubmissionRateChart data={data}/></section><section><div className="section-title"><div><span className="eyebrow">Scores</span><h2>Distribution</h2></div></div><ScoreDistributionChart data={data}/></section></div></main>}
 export function UserDashboardPage(){return <main className="simple-page"><section className="workspace-card"><span className="eyebrow">Participant</span><h1>My work</h1><p>Your active teams, submissions, and hackathon progress will appear here.</p></section></main>}
 export function AdminUserManagementPage(){

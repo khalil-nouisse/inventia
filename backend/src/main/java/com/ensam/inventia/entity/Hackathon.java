@@ -9,5 +9,5 @@ public class Hackathon {
  @Enumerated(EnumType.STRING) private HackathonStatus status; private LocalDateTime createdAt; private LocalDateTime updatedAt;
  @ManyToOne(optional=false) private User createdBy; @OneToMany(mappedBy="hackathon", cascade=CascadeType.ALL) @Builder.Default private List<Team> teams=new ArrayList<>();
  @PrePersist void prePersist(){createdAt=LocalDateTime.now(); updatedAt=createdAt; computeStatus();} @PreUpdate void preUpdate(){updatedAt=LocalDateTime.now(); computeStatus();}
- public void computeStatus(){ LocalDate today=LocalDate.now(); status=today.isBefore(startDate)?HackathonStatus.UPCOMING:(today.isAfter(endDate)?HackathonStatus.ENDED:HackathonStatus.ONGOING); }
+ public void computeStatus(){ if(status==HackathonStatus.ANNOUNCED) return; LocalDate today=LocalDate.now(); status=today.isBefore(startDate)?HackathonStatus.UPCOMING:(today.isAfter(endDate)?HackathonStatus.ENDED:HackathonStatus.ONGOING); }
 }

@@ -1,0 +1,1 @@
+package com.ensam.inventia.dto.response; public record ScoringSubmissionResponse(Long submissionId,Long teamId,String teamName,String submissionTitle,String repositoryUrl,String demoUrl,String techStack,Double averageScore,Integer scoreCount) {}

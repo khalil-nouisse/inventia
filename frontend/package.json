@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
-    "antd": "latest",
+    "antd": "^5.27.6",
     "axios": "latest",
     "lucide-react": "latest",
     "react": "^18.3.1",
